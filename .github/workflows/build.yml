@@ -1,0 +1,27 @@
+name: build
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Unpack source (if uploaded as a zip)
+        run: |
+          if ls *.zip >/dev/null 2>&1; then
+            unzip -o *.zip -d mods-src
+            echo "SRC=mods-src" >> $GITHUB_ENV
+          else
+            echo "SRC=." >> $GITHUB_ENV
+          fi
+      - name: Build
+        working-directory: ${{ env.SRC }}
+        run: chmod +x gradlew && ./gradlew build --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spacetear-jar
+          path: ${{ env.SRC }}/build/libs/*.jar
+concurrency: 
